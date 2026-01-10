@@ -52,7 +52,7 @@ abstract class AbstractOllamaTestContainer(
     /**
      * 拉取模型
      */
-    private fun pullModelIfAbsent(model: OllamaModel) {
+    private fun pullModelIfAbsent(model: String) {
         // 1) 先检查是否已存在
         val list = container.execInContainer("ollama", "list")
         check(list.exitCode == 0) { "ollama list failed: ${list.stderr}\n${list.stdout}" }
@@ -68,7 +68,7 @@ abstract class AbstractOllamaTestContainer(
             }
             .toSet()
 
-        if (model.modelName in existingModels) {
+        if (model in existingModels) {
             println("Model already exists: $model, skip pulling.")
             return
         }
@@ -76,7 +76,7 @@ abstract class AbstractOllamaTestContainer(
         // 2) 不存在才 pull
         println("Start pulling model: $model ...")
         val time = System.currentTimeMillis()
-        val r = container.execInContainer("ollama", "pull", model.modelName)
+        val r = container.execInContainer("ollama", "pull", model)
         check(r.exitCode == 0) { "ollama pull $model failed: ${r.stderr}\n${r.stdout}" }
         println("Finish pulling model: $model in ${System.currentTimeMillis() - time}ms")
     }
@@ -92,16 +92,13 @@ abstract class AbstractOllamaTestContainer(
      * 来代替@Testcontainers(disabledWithoutDocker = true)
      *
      * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @param model ollama支持的模型
+     * @param model ollama支持的模型的名称
      * @return 运行中的容器对象
      */
-    fun startIfNeeded(registry: DynamicPropertyRegistry?, model: OllamaModel): Container {
+    fun startIfNeeded(registry: DynamicPropertyRegistry?, model: String): Container {
         synchronized(this) {
-            val running = TestContainerKit.isContainerRunning(label)
             val runningContainer = TestContainerKit.startContainerIfNeeded(label, container)
-            if (!running) {
-                pullModelIfAbsent(model)
-            }
+            pullModelIfAbsent(model)
             if (registry != null) {
                 registerProperties(registry, runningContainer, model)
             }
@@ -112,10 +109,10 @@ abstract class AbstractOllamaTestContainer(
     protected fun registerProperties(
         registry: DynamicPropertyRegistry,
         runningContainer: Container,
-        model: OllamaModel
+        model: String
     ) {
         registry.add("spring.ai.model.embedding") { "ollama" }
-        registry.add("spring.ai.ollama.embedding.options.model") { model.modelName }
+        registry.add("spring.ai.ollama.embedding.options.model") { model }
         registry.add("spring.ai.ollama.base-url") { "http://127.0.0.1:$port" }
     }
 

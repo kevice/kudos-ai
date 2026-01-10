@@ -14,7 +14,7 @@ object OllamaOfficialTestContainer : AbstractOllamaTestContainer(
 
     @JvmStatic
     fun main(args: Array<String>?) {
-        startIfNeeded(null, OllamaEmbeddingModelEnum.ALL_MINILM)
+        startIfNeeded(null, OllamaEmbeddingModelEnum.ALL_MINILM.modelName)
         println("Ollama ${container.host} port: $port")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
