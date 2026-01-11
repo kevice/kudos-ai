@@ -56,7 +56,12 @@ abstract class AbstractOllamaTestContainer(
         // 1) 先检查是否已存在
         val list = container.execInContainer("ollama", "list")
         check(list.exitCode == 0) { "ollama list failed: ${list.stderr}\n${list.stdout}" }
+        
+        // 由于ollama list返回的model名字可能没有tag（如 'llama2' 而不是 'llama2:latest'），应同时支持tag和无tag的情况
+        // 且ollama pull会在存在时很快返回。因此这里改进为：仅当fullname或无tag名都不存在时才pull
+        val modelBase = model.substringBefore(':')
 
+        // 解析已存在的模型列表，同时保存完整名和基础名
         val existingModels: Set<String> = list.stdout
             .lineSequence()
             .drop(1) // 跳过表头：NAME ID SIZE MODIFIED
@@ -67,9 +72,29 @@ abstract class AbstractOllamaTestContainer(
                 line.split(Regex("\\s+"), limit = 2).first()
             }
             .toSet()
+        
+        // 同时提取所有已存在模型的基础名（无tag）
+        val existingModelBases: Set<String> = existingModels.map { it.substringBefore(':') }.toSet()
 
-        if (model in existingModels) {
-            println("Model already exists: $model, skip pulling.")
+        // 调试信息：打印解析结果
+        println("DEBUG: Requested model: $model, modelBase: $modelBase")
+        println("DEBUG: Existing models: $existingModels")
+        println("DEBUG: Existing model bases: $existingModelBases")
+
+        // 检查：完整模型名存在，或基础名存在（无论tag是否匹配）
+        val modelExists = model in existingModels || 
+                         modelBase in existingModels || 
+                         modelBase in existingModelBases
+        
+        println("DEBUG: modelExists = $modelExists (model in existingModels: ${model in existingModels}, modelBase in existingModels: ${modelBase in existingModels}, modelBase in existingModelBases: ${modelBase in existingModelBases})")
+        
+        if (modelExists) {
+            val existingName = when {
+                model in existingModels -> model
+                modelBase in existingModels -> modelBase
+                else -> existingModels.find { it.substringBefore(':') == modelBase } ?: modelBase
+            }
+            println("Model already exists: $existingName, skip pulling.")
             return
         }
 
