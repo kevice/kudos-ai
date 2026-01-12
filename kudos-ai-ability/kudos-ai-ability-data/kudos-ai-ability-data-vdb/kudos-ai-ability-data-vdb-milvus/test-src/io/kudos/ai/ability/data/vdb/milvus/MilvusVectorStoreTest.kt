@@ -1,9 +1,10 @@
 package io.kudos.ai.ability.data.vdb.milvus
 
 import io.kudos.ai.ability.model.embedding.support.enums.impl.EmbeddingModelEnum
-import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.ai.test.container.containers.MilvusTestContainer
 import io.kudos.ai.test.container.containers.ollama.OllamaMiniTestContainer
+import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import org.springframework.ai.document.Document
 import org.springframework.ai.vectorstore.SearchRequest
@@ -14,7 +15,6 @@ import org.springframework.ai.vectorstore.milvus.MilvusSearchRequest
 import org.springframework.ai.vectorstore.milvus.MilvusVectorStore
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -36,7 +36,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class MilvusVectorStoreTest {
 
     @Resource
