@@ -1,0 +1,13 @@
+spring:
+  ai:
+    ollama:
+      # 本地运行时使用（Testcontainers 会覆盖）
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: llava:7b
+          temperature: 0.7
+
+logging:
+  level:
+    org.springframework.ai: DEBUG

@@ -1,6 +1,6 @@
 package io.kudos.ai.tools.model.chat
 
-import io.kudos.ai.ability.model.chat.support.enums.impl.ChatModelEnum
+import io.kudos.ai.ability.model.chat.support.enums.impl.TextModelEnum
 import io.kudos.ai.test.container.containers.ollama.OllamaMiniTestContainer
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.messages.Message
@@ -25,7 +25,7 @@ import java.util.Scanner
  */
 object InteractiveAIChatTool {
 
-    private val DEFAULT_MODEL = ChatModelEnum.LLAMA_3_1_8B
+    private val DEFAULT_MODEL = TextModelEnum.LLAMA_3_1_8B
 
     private val OLLAMA_URL = "http://127.0.0.1:${OllamaMiniTestContainer.port}"
 
@@ -33,7 +33,7 @@ object InteractiveAIChatTool {
     fun main(args: Array<String>) {
         // 解析命令行参数：模型名称
         val modelName = args.getOrNull(0)?.let { modelArg ->
-            ChatModelEnum.entries.find { it.modelName == modelArg }?.modelName
+            TextModelEnum.entries.find { it.modelName == modelArg }?.modelName
                 ?: modelArg // 如果找不到枚举，直接使用输入的字符串
         } ?: DEFAULT_MODEL.modelName
 

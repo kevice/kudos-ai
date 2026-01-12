@@ -13,12 +13,13 @@ enum class EmbeddingModelEnum(
     override val modelName: String,
     override val dimension: Int,
     override val parameters: Float,
+    override val contextSize: Float,
     override val size: Float,
     override val provider: String
 ) : IEmbeddingModelEnum {
 
-    ALL_MINILM("all-minilm:l6-v2", 384, 0.0227F, 0.09F, "SBERT"), // 文本向量嵌入模型 小、快 適合測試/開發
+    ALL_MINILM("all-minilm:33m", 384, 0.033F, 0.512F, 0.067F, "SBERT"), // 文本向量嵌入模型 小、快 適合測試/開發
 
-    NOMIC_EMBED_TEXT("nomic-embed-text", 768, 0.137F, 0.274F, "Nomic AI"), // 文本向量嵌入模型 高质量、通用 適合生产/RAG
+    NOMIC_EMBED_TEXT("nomic-embed-text:v1.5", 768, 0.137F, 2F, 0.274F, "Nomic AI"), // 文本向量嵌入模型 高质量、通用 適合生产/RAG
 
 }

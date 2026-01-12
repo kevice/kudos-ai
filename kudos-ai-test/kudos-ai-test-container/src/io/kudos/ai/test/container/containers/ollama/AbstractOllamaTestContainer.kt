@@ -86,10 +86,10 @@ abstract class AbstractOllamaTestContainer(
         println("DEBUG: Existing models: $existingModels")
         println("DEBUG: Existing model bases: $existingModelBases")
 
-        // 检查：完整模型名存在，或基础名存在（无论tag是否匹配）
-        val modelExists = model in existingModels || 
-                         modelBase in existingModels || 
-                         modelBase in existingModelBases
+        // 检查：完整模型名存在
+        val modelExists = model in existingModels
+//                || modelBase in existingModels
+//                || modelBase in existingModelBases
         
         println("DEBUG: modelExists = $modelExists (model in existingModels: ${model in existingModels}, modelBase in existingModels: ${modelBase in existingModels}, modelBase in existingModelBases: ${modelBase in existingModelBases})")
         
