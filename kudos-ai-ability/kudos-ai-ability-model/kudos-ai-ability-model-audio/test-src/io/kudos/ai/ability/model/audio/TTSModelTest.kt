@@ -1,7 +1,7 @@
 package io.kudos.ai.ability.model.audio
 
 import io.kudos.ai.ability.model.audio.support.enums.impl.TTSModelEnum
-import io.kudos.ai.test.container.containers.SpeechesTestContainer
+import io.kudos.ai.test.container.containers.SpeachesTestContainer
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -91,26 +91,54 @@ class TTSModelTest {
      * @return 文件扩展名（如 "wav", "mp3"）
      */
     private fun detectAudioFormat(audioBytes: ByteArray): String {
+        if (audioBytes.isEmpty()) {
+            log.warn("音频数据为空，无法检测格式")
+            return "unknown"
+        }
+        
+        // 打印前几个字节用于调试
+        val headerBytes = audioBytes.take(16).joinToString(" ") { 
+            String.format("%02X", it.toInt() and 0xFF)
+        }
+        log.debug("音频文件头部（前16字节）: $headerBytes")
+        
         if (audioBytes.size >= 4) {
-            // WAV 文件通常以 "RIFF" 开头
+            // WAV 文件通常以 "RIFF" 开头（0x52 0x49 0x46 0x46）
             if (audioBytes[0] == 'R'.code.toByte() && 
                 audioBytes[1] == 'I'.code.toByte() && 
                 audioBytes[2] == 'F'.code.toByte() && 
                 audioBytes[3] == 'F'.code.toByte()) {
+                log.debug("检测到 WAV 格式（RIFF 头部）")
                 return "wav"
             }
         }
         
         if (audioBytes.size >= 3) {
-            // MP3 文件有特定的头部
+            // MP3 文件有特定的头部（ID3v2 标签以 "ID3" 开头，或 MP3 帧同步字 0xFF 0xE0+）
+            // ID3v2 标签：0x49 0x44 0x33
+            if (audioBytes[0] == 0x49.toByte() && 
+                audioBytes[1] == 0x44.toByte() && 
+                audioBytes[2] == 0x33.toByte()) {
+                log.debug("检测到 MP3 格式（ID3v2 标签）")
+                return "mp3"
+            }
+            // MP3 帧同步字：0xFF 0xE0-0xFF
             if (audioBytes[0] == 0xFF.toByte() && 
                 (audioBytes[1].toInt() and 0xE0) == 0xE0) {
+                log.debug("检测到 MP3 格式（帧同步字）")
                 return "mp3"
             }
         }
         
-        // 默认使用 wav 格式
-        return "wav"
+        // 检查是否是 PCM 格式（原始音频数据，通常没有头部）
+        // 如果数据大小合理且没有明显的文件头，可能是 PCM
+        if (audioBytes.size > 1000) {
+            log.warn("无法识别音频格式，可能是 PCM 或其他格式。使用默认扩展名 'mp3'")
+            return "mp3"  // 默认使用 mp3，因为 Spring AI 默认返回 mp3
+        }
+        
+        log.warn("音频数据太小或格式无法识别，使用默认扩展名 'mp3'")
+        return "mp3"
     }
 
     @Test
@@ -152,8 +180,11 @@ class TTSModelTest {
     @Test
     fun test_generate_speech_with_prompt() {
         // Arrange
+        // 注意：使用 speaches-ai/Kokoro-82M-v1.0-ONNX 时，中英文混合文本中的中文可能被忽略
+        // 这是模型的局限性，不是代码问题
         val text = "Spring AI 是一个强大的 AI 应用开发框架"
         log.debug("Text: $text")
+        log.warn("注意：由于模型限制，中英文混合文本中的中文部分可能被忽略，只生成英文部分")
         val prompt = TextToSpeechPrompt(text)
 
         // Act
@@ -168,6 +199,7 @@ class TTSModelTest {
         assertTrue(audioBytes.isNotEmpty(), "音频数据不应该为空")
         
         log.debug("Generated audio size: ${audioBytes.size} bytes")
+        log.warn("如果生成的语音只包含英文部分（Spring AI AI），这是模型的局限性，不是错误")
         
         // 保存音频文件
         saveAudioFile(audioBytes, "test_generate_speech_with_prompt", text)
@@ -398,20 +430,26 @@ class TTSModelTest {
         @JvmStatic
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
-            // 使用 Kokoro TTS 模型进行测试（高质量，支持多种语言）
-            // 注意：KOKORO_82M_V1_1_ZH 可能不在 speaches 模型注册表中，使用 KOKORO_82M
-            val ttsModel = TTSModelEnum.KOKORO_82M.modelName
+            // 使用官方 Kokoro TTS 模型进行测试（稳定可靠）
+            // 注意：speaches-ai/Kokoro-82M-v1.0-ONNX 虽然支持多语言，但对中英文混合文本的支持有限
+            // 在处理中英文混合文本时，中文部分可能被忽略（这是模型的局限性）
+            // 如果主要处理中文或中英文混合文本，建议：
+            // 1. 纯中文文本：使用 speaches-ai/piper-zh_CN-huayan-medium
+            // 2. 中英文混合：目前 speaches-ai 没有完美支持的模型，可能需要分段处理或等待更好的模型
+            val ttsModel = TTSModelEnum.KOKORO_82M
 
             // 启动 Speeches 容器并下载 TTS 模型
             // SpeechesTestContainer 会自动注册 spring.ai.speaches.base-url
-            SpeechesTestContainer.startIfNeeded(registry, ttsModel = ttsModel)
+            SpeachesTestContainer.startIfNeeded(registry, mapOf(ttsModel.audioModelType.name to ttsModel.modelName))
 
             // 配置 OpenAI TTS 自动装配（speaches 兼容 OpenAI API）
-            registry.add("spring.ai.openai.base-url") { "http://127.0.0.1:${SpeechesTestContainer.PORT}" }
+            registry.add("spring.ai.openai.base-url") { "http://127.0.0.1:${SpeachesTestContainer.PORT}" }
             registry.add("spring.ai.openai.api-key") { "dummy" } // speaches 默认不校验，可用占位
             registry.add("spring.ai.openai.audio.speech.options.model") { ttsModel }
-            // 尝试使用 WAV 格式，可能更兼容 speaches
-            registry.add("spring.ai.openai.audio.speech.options.response-format") { "wav" }
+            // 明确指定 MP3 格式，确保音频文件可以正常播放
+            // 注意：如果不指定格式，Spring AI 默认使用 mp3，但 speaches-ai 可能返回其他格式
+            // 明确指定可以避免格式不匹配导致的播放问题
+            registry.add("spring.ai.openai.audio.speech.options.response-format") { "mp3" }
         }
     }
 

@@ -29,6 +29,7 @@
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-data/kudos-ai-ability-data-vdb/kudos-ai-ability-data-vdb-milvus" />
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-data/kudos-ai-ability-data-vdb/kudos-ai-ability-data-vdb-pgvector" />
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-model" />
+            <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-model/kudos-ai-ability-model-audio" />
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-model/kudos-ai-ability-model-common" />
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-model/kudos-ai-ability-model-embedding" />
             <option value="$PROJECT_DIR$/kudos-ai-ability/kudos-ai-ability-model/kudos-ai-ability-model-image" />

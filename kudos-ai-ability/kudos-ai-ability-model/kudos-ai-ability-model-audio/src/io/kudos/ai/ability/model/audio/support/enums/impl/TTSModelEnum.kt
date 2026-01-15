@@ -19,10 +19,40 @@ enum class TTSModelEnum(
 
     /**
      * Kokoro TTS 模型
-     * 高质量语音合成，82M 参数，支持多种语言
+     * 高质量语音合成，82M 参数，支持多种语言（包括中文）
      * 可处理较长文本输入（约 2K token）
+     * 注意：虽然支持中文，但对中英文混合文本的支持有限
+     * 在处理中英文混合文本时，中文部分可能被忽略
+     * 如果主要处理中英文混合文本，建议使用 SURONEK_KOKORO_82M_V1_1_ZH_ONNX
      */
     KOKORO_82M("speaches-ai/Kokoro-82M-v1.0-ONNX", 0.082F, 2.0F, 0.163F, "speaches-ai"),
+
+    /**
+     * Kokoro TTS 中文优化模型（非官方）
+     * 专门针对中文优化的版本，82M 参数，ONNX 格式
+     * 包含 100 种来自 LongMaoData 的中文声音，以及 3 种新的英文声音
+     * 优势：专门针对中英文混合文本进行了优化，能更好地处理中英文混合内容
+     * 注意：此模型可能不支持 speaches-ai 的 OpenAI voice 映射（如 alloy -> af_heart）
+     * 如果遇到 voice 映射错误（AssertionError: Voice af_heart not found），
+     * 这是 speaches-ai 的 voice 映射机制问题，不是模型本身的问题
+     * 建议：等待 speaches-ai 更新以支持该模型的 voice 映射，或使用其他模型
+     */
+    SURONEK_KOKORO_82M_V1_1_ZH_ONNX("suronek/Kokoro-82M-v1.1-zh-ONNX", 0.082F, 2.0F, 0.163F, "suronek"),
+
+    /**
+     * Piper TTS 中文模型（高质量）
+     * 专门针对中文优化的 Piper 模型，支持中文语音合成
+     * 轻量级，适合快速部署，中文语音质量较好
+     * 推荐用于中文 TTS 场景
+     */
+    PIPER_ZH_CN_HUAYAN_MEDIUM("speaches-ai/piper-zh_CN-huayan-medium", 0.05F, 1.0F, 0.072F, "speaches-ai"),
+
+    /**
+     * Piper TTS 中文模型（低质量，快速）
+     * 专门针对中文优化的 Piper 模型，低质量但速度快
+     * 适合对速度要求较高的场景
+     */
+    PIPER_ZH_CN_HUAYAN_X_LOW("speaches-ai/piper-zh_CN-huayan-x_low", 0.05F, 1.0F, 0.072F, "speaches-ai"),
 
     // Speeches-ai不支持：
 //    /**

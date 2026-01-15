@@ -1,5 +1,6 @@
 package io.kudos.ai.ability.model.audio.support.enums.ienums
 
+import io.kudos.ai.ability.model.audio.support.enums.impl.AudioModelTypeEnum
 import io.kudos.ai.ability.model.common.IAIModel
 
 /**
@@ -10,5 +11,9 @@ import io.kudos.ai.ability.model.common.IAIModel
  * @since 1.0.0
  */
 interface ITTSModelEnum : IAIModel {
+
+    /** 语音模型类型 */
+    val audioModelType: AudioModelTypeEnum
+        get() = AudioModelTypeEnum.TTS
 
 }

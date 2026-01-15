@@ -7,6 +7,7 @@ spring:
         speech:
           options:
             model: speaches-ai/Kokoro-82M-v1.0-ONNX
+            response-format: mp3
 
 logging:
   level:
