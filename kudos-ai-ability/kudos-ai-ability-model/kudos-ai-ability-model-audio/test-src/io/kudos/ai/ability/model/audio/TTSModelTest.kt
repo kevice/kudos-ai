@@ -445,7 +445,7 @@ class TTSModelTest {
             // 配置 OpenAI TTS 自动装配（speaches 兼容 OpenAI API）
             registry.add("spring.ai.openai.base-url") { "http://127.0.0.1:${SpeachesTestContainer.PORT}" }
             registry.add("spring.ai.openai.api-key") { "dummy" } // speaches 默认不校验，可用占位
-            registry.add("spring.ai.openai.audio.speech.options.model") { ttsModel }
+            registry.add("spring.ai.openai.audio.speech.options.model") { ttsModel.modelName }
             // 明确指定 MP3 格式，确保音频文件可以正常播放
             // 注意：如果不指定格式，Spring AI 默认使用 mp3，但 speaches-ai 可能返回其他格式
             // 明确指定可以避免格式不匹配导致的播放问题
