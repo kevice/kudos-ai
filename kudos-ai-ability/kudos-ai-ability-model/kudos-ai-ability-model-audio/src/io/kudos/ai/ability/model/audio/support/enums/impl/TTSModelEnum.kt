@@ -1,6 +1,8 @@
 package io.kudos.ai.ability.model.audio.support.enums.impl
 
 import io.kudos.ai.ability.model.audio.support.enums.ienums.ITTSModelEnum
+import io.kudos.ai.ability.model.audio.support.enums.ienums.IVoiceEnum
+import kotlin.reflect.KClass
 
 /**
  * TTS (Text-to-Speech) 文本转语音模型枚举
@@ -19,11 +21,12 @@ enum class TTSModelEnum(
 
     /**
      * Kokoro TTS 模型
-     * 高质量语音合成，82M 参数，支持多种语言（包括中文）
+     * 高质量语音合成，82M 参数，支持多种语言（主要是英文）
      * 可处理较长文本输入（约 2K token）
-     * 注意：虽然支持中文，但对中英文混合文本的支持有限
-     * 在处理中英文混合文本时，中文部分可能被忽略
-     * 如果主要处理中英文混合文本，建议使用 SURONEK_KOKORO_82M_V1_1_ZH_ONNX
+     * 注意：虽然模型有中文 voices，但底层使用 espeak backend 进行音素化，不支持中文语言代码 "zh"
+     * 因此实际上无法处理中文文本，会报错：RuntimeError: language "zh" is not supported by the espeak backend
+     * 如果主要处理中文文本，请使用 PIPER_ZH_CN_HUAYAN_MEDIUM
+     * 如果主要处理中英文混合文本，目前 speaches-ai 没有完美支持的模型
      */
     KOKORO_82M("speaches-ai/Kokoro-82M-v1.0-ONNX", 0.082F, 2.0F, 0.163F, "speaches-ai"),
 
@@ -52,7 +55,46 @@ enum class TTSModelEnum(
      * 专门针对中文优化的 Piper 模型，低质量但速度快
      * 适合对速度要求较高的场景
      */
-    PIPER_ZH_CN_HUAYAN_X_LOW("speaches-ai/piper-zh_CN-huayan-x_low", 0.05F, 1.0F, 0.072F, "speaches-ai"),
+    PIPER_ZH_CN_HUAYAN_X_LOW("speaches-ai/piper-zh_CN-huayan-x_low", 0.05F, 1.0F, 0.072F, "speaches-ai");
+
+
+    override fun getDefaultVoice(): IVoiceEnum? {
+        return when (this) {
+            KOKORO_82M -> KokoroVoiceEnum.getDefaultVoice()
+            SURONEK_KOKORO_82M_V1_1_ZH_ONNX -> KokoroVoiceEnum.getDefaultChineseVoice()
+            PIPER_ZH_CN_HUAYAN_MEDIUM -> PiperVoiceEnum.getRecommendedVoiceForModel(modelName)
+            PIPER_ZH_CN_HUAYAN_X_LOW -> PiperVoiceEnum.getRecommendedVoiceForModel(modelName)
+        }
+    }
+    
+    override fun findVoice(voiceId: String): IVoiceEnum? {
+        return when (this) {
+            KOKORO_82M, SURONEK_KOKORO_82M_V1_1_ZH_ONNX -> KokoroVoiceEnum.fromVoiceId(voiceId)
+            PIPER_ZH_CN_HUAYAN_MEDIUM, PIPER_ZH_CN_HUAYAN_X_LOW -> PiperVoiceEnum.fromVoiceId(voiceId)
+        }
+    }
+    
+    override fun getAvailableVoices(): List<IVoiceEnum> {
+        return when (this) {
+            KOKORO_82M, SURONEK_KOKORO_82M_V1_1_ZH_ONNX -> KokoroVoiceEnum.entries.toList()
+            PIPER_ZH_CN_HUAYAN_MEDIUM, PIPER_ZH_CN_HUAYAN_X_LOW -> PiperVoiceEnum.entries.toList()
+        }
+    }
+
+    override fun getDefaultChineseVoice(): IVoiceEnum? {
+        return when (this) {
+            KOKORO_82M, SURONEK_KOKORO_82M_V1_1_ZH_ONNX -> KokoroVoiceEnum.getDefaultChineseVoice()
+            PIPER_ZH_CN_HUAYAN_MEDIUM, PIPER_ZH_CN_HUAYAN_X_LOW -> PiperVoiceEnum.getChineseVoices().firstOrNull()
+        }
+    }
+    
+    override fun getDefaultEnglishVoice(): IVoiceEnum? {
+        return when (this) {
+            KOKORO_82M -> KokoroVoiceEnum.getDefaultVoice()
+            SURONEK_KOKORO_82M_V1_1_ZH_ONNX -> KokoroVoiceEnum.getEnglishVoices().firstOrNull()
+            PIPER_ZH_CN_HUAYAN_MEDIUM, PIPER_ZH_CN_HUAYAN_X_LOW -> null // Piper 中文模型不支持英文
+        }
+    }
 
     // Speeches-ai不支持：
 //    /**

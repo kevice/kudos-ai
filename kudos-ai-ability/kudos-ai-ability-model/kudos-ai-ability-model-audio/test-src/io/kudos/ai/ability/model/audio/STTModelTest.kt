@@ -1,14 +1,14 @@
 package io.kudos.ai.ability.model.audio
 
 import io.kudos.ai.ability.model.audio.support.enums.impl.STTModelEnum
-import io.kudos.ai.test.container.containers.SpeachesTestContainer
+import io.kudos.ai.test.container.containers.speaches.SpeachesTestContainer
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
-import org.springframework.ai.audio.transcription.TranscriptionModel
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse
+import org.springframework.ai.audio.transcription.TranscriptionModel
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.FileSystemResource
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -16,7 +16,10 @@ import org.springframework.test.context.DynamicPropertySource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.test.*
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * STT (Speech-to-Text) 语音转文本模型测试用例
@@ -425,11 +428,9 @@ class STTModelTest {
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
             // 启动 Speeches 容器并下载 STT 模型
-            // SpeechesTestContainer 会自动注册 spring.ai.speaches.base-url
-            SpeachesTestContainer.startIfNeeded(registry, mapOf(sttModel.audioModelType.name to sttModel.modelName))
+            SpeachesTestContainer.startIfNeeded(registry, listOf(sttModel.modelName))
 
             // 配置 OpenAI STT 自动装配（speaches 兼容 OpenAI API）
-            registry.add("spring.ai.openai.base-url") { "http://127.0.0.1:${SpeachesTestContainer.PORT}" }
             registry.add("spring.ai.openai.api-key") { "dummy" } // speaches 默认不校验，可用占位
             registry.add("spring.ai.openai.audio.transcription.options.model") { sttModel.modelName }
         }
