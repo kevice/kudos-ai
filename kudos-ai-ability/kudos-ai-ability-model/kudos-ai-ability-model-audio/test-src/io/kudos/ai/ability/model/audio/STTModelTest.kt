@@ -112,12 +112,14 @@ class STTModelTest {
         assertNotNull(text, "转录文本不应该为 null")
         // 静音音频文件的转录结果应该是空字符串或很短的误识别内容
         // 注意：语音识别模型可能对静音音频产生误识别，这是模型的局限性
-        val isSilenceResult = text.isEmpty() || text.trim().length <= 10
+        // 大型模型（如 large-v3）可能产生较长的误识别文本
+        val maxLength = sttModel.maxSilenceMisrecognitionLength
+        val isSilenceResult = text.isEmpty() || text.trim().length <= maxLength
         assertTrue(
             isSilenceResult,
-            "静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text'"
+            "静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text'"
         )
-        log.debug("转录结果: '$text' (静音音频，符合预期：空字符串或短误识别)")
+        log.debug("转录结果: '$text' (静音音频，符合预期：空字符串或短误识别，长度: ${text.length}, 阈值: $maxLength)")
     }
 
     @Test
@@ -143,13 +145,15 @@ class STTModelTest {
         val text = response.result.output
         // 静音音频文件的转录结果应该是空字符串或很短的误识别内容
         // 注意：语音识别模型可能对静音音频产生误识别，这是模型的局限性
-        val isSilenceResult = text.isEmpty() || text.trim().length <= 10
+        // 大型模型（如 large-v3）可能产生较长的误识别文本
+        val maxLength = sttModel.maxSilenceMisrecognitionLength
+        val isSilenceResult = text.isEmpty() || text.trim().length <= maxLength
         assertTrue(
             isSilenceResult,
-            "静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text'"
+            "静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text'"
         )
         
-        log.debug("转录结果: '$text' (静音音频，符合预期：空字符串或短误识别)")
+        log.debug("转录结果: '$text' (静音音频，符合预期：空字符串或短误识别，长度: ${text.length}, 阈值: $maxLength)")
     }
 
     @Test
@@ -216,12 +220,14 @@ class STTModelTest {
             assertNotNull(text, "音频文件[$index] 的转录文本不应该为 null")
             // 静音音频文件的转录结果应该是空字符串或很短的误识别内容
             // 注意：语音识别模型可能对静音音频产生误识别，这是模型的局限性
-            val isSilenceResult = text.isEmpty() || text.trim().length <= 10
+            // 大型模型（如 large-v3）可能产生较长的误识别文本
+            val maxLength = sttModel.maxSilenceMisrecognitionLength
+            val isSilenceResult = text.isEmpty() || text.trim().length <= maxLength
             assertTrue(
                 isSilenceResult,
-                "音频文件[$index] 的转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text'"
+                "音频文件[$index] 的转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text'"
             )
-            log.debug("音频文件[$index] 转录结果: '$text' (静音音频，符合预期：空字符串或短误识别)")
+            log.debug("音频文件[$index] 转录结果: '$text' (静音音频，符合预期：空字符串或短误识别，长度: ${text.length}, 阈值: $maxLength)")
         }
     }
 
@@ -289,12 +295,14 @@ class STTModelTest {
         assertNotNull(text, "大音频文件的转录文本不应该为 null")
         // 静音音频文件的转录结果应该是空字符串或很短的误识别内容
         // 注意：语音识别模型可能对静音音频产生误识别，这是模型的局限性
-        val isSilenceResult = text.isEmpty() || text.trim().length <= 10
+        // 大型模型（如 large-v3）可能产生较长的误识别文本
+        val maxLength = sttModel.maxSilenceMisrecognitionLength
+        val isSilenceResult = text.isEmpty() || text.trim().length <= maxLength
         assertTrue(
             isSilenceResult,
-            "大静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text'"
+            "大静音音频文件的转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text'"
         )
-        log.debug("大音频文件转录结果: '$text' (静音音频，符合预期：空字符串或短误识别，长度: ${text.length})")
+        log.debug("大音频文件转录结果: '$text' (静音音频，符合预期：空字符串或短误识别，长度: ${text.length}, 阈值: $maxLength)")
     }
 
     @Test
@@ -333,17 +341,19 @@ class STTModelTest {
         
         // 对于静音音频，两次结果应该为空字符串或很短的误识别内容
         // 注意：语音识别模型可能对静音音频产生误识别，这是模型的局限性
-        val isSilenceResult1 = text1.isEmpty() || text1.trim().length <= 10
-        val isSilenceResult2 = text2.isEmpty() || text2.trim().length <= 10
+        // 大型模型（如 large-v3）可能产生较长的误识别文本
+        val maxLength = sttModel.maxSilenceMisrecognitionLength
+        val isSilenceResult1 = text1.isEmpty() || text1.trim().length <= maxLength
+        val isSilenceResult2 = text2.isEmpty() || text2.trim().length <= maxLength
         assertTrue(
             isSilenceResult1,
-            "第一次转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text1'"
+            "第一次转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text1'"
         )
         assertTrue(
             isSilenceResult2,
-            "第二次转录结果应该为空字符串或很短的误识别内容（≤10字符），实际结果: '$text2'"
+            "第二次转录结果应该为空字符串或很短的误识别内容（≤${maxLength}字符），实际结果: '$text2'"
         )
-        log.debug("一致性测试通过：两次转录结果都为空字符串或短误识别，符合预期")
+        log.debug("一致性测试通过：两次转录结果都为空字符串或短误识别，符合预期（阈值: $maxLength）")
     }
 
     @Test
@@ -408,11 +418,12 @@ class STTModelTest {
     }
 
     companion object {
+
+        private val sttModel = STTModelEnum.FASTER_WHISPER_SMALL
+
         @JvmStatic
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
-            val sttModel = STTModelEnum.FASTER_WHISPER_SMALL
-
             // 启动 Speeches 容器并下载 STT 模型
             // SpeechesTestContainer 会自动注册 spring.ai.speaches.base-url
             SpeachesTestContainer.startIfNeeded(registry, mapOf(sttModel.audioModelType.name to sttModel.modelName))
