@@ -6,9 +6,12 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
+import org.springframework.ai.audio.transcription.AudioTranscriptionOptions
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse
 import org.springframework.ai.audio.transcription.TranscriptionModel
+import org.springframework.ai.openai.OpenAiAudioTranscriptionOptions
+import org.springframework.ai.openai.api.OpenAiAudioApi
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.FileSystemResource
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -44,7 +47,7 @@ class STTModelTest {
     private lateinit var transcriptionModel: TranscriptionModel
 
     private val log = LogFactory.getLog(this)
-
+    
     @BeforeTest
     fun setup() {
         // 确保 TranscriptionModel 已注入
@@ -94,13 +97,16 @@ class STTModelTest {
     @Test
     fun test_transcribe_audio_from_bytes() {
         // Arrange
+        val sttModel = defaultSttModel
         val testAudioPath = createTestAudioFile("test_transcribe_audio_from_bytes")
         log.debug("音频文件: ${testAudioPath.toAbsolutePath()}, 大小: ${Files.size(testAudioPath)} bytes")
+        val audioResource = FileSystemResource(testAudioPath.toFile())
+        val opts = buildAudioTranscriptionOptions(sttModel)
+        val prompt = AudioTranscriptionPrompt(audioResource, opts)
 
         // Act
-        val audioResource = FileSystemResource(testAudioPath.toFile())
         val response = try {
-            transcriptionModel.call(AudioTranscriptionPrompt(audioResource))
+            transcriptionModel.call(prompt)
         } catch (e: Exception) {
             log.warn("转录失败，可能是测试音频文件不包含有效语音: ${e.message}")
             // 对于测试音频（静音），转录可能返回空字符串或抛出异常，这是正常的
@@ -128,9 +134,11 @@ class STTModelTest {
     @Test
     fun test_transcribe_audio_with_prompt() {
         // Arrange
+        val sttModel = defaultSttModel
         val testAudioPath = createTestAudioFile("test_transcribe_audio_with_prompt")
         val audioResource = FileSystemResource(testAudioPath.toFile())
-        val prompt = AudioTranscriptionPrompt(audioResource)
+        val opts = buildAudioTranscriptionOptions(sttModel)
+        val prompt = AudioTranscriptionPrompt(audioResource, opts)
 
         // Act
         val response: AudioTranscriptionResponse = try {
@@ -162,7 +170,9 @@ class STTModelTest {
     @Test
     fun test_transcribe_empty_audio() {
         // Arrange
+        val sttModel = defaultSttModel
         val emptyAudio = ByteArray(0)
+        val opts = buildAudioTranscriptionOptions(sttModel)
 
         // Act & Assert
         // 空音频应该抛出异常或返回空字符串
@@ -171,8 +181,9 @@ class STTModelTest {
         try {
             Files.write(emptyFile, emptyAudio)
             val emptyResource = FileSystemResource(emptyFile.toFile())
+            val prompt = AudioTranscriptionPrompt(emptyResource, opts)
             try {
-                val response = transcriptionModel.call(AudioTranscriptionPrompt(emptyResource))
+                val response = transcriptionModel.call(prompt)
                 val text = response.result.output
                 // 如果返回空字符串，也是可以接受的
                 assertTrue(text.isEmpty(), "空音频应该返回空字符串")
@@ -198,18 +209,21 @@ class STTModelTest {
     @Test
     fun test_transcribe_multiple_audio_files() {
         // Arrange
+        val sttModel = defaultSttModel
         val audioFiles = listOf(
             createTestAudioFile("test_multiple_1"),
             createTestAudioFile("test_multiple_2"),
             createTestAudioFile("test_multiple_3")
         )
         log.debug("准备转录 ${audioFiles.size} 个音频文件")
+        val opts = buildAudioTranscriptionOptions(sttModel)
 
         // Act & Assert
         audioFiles.forEachIndexed { index, audioPath ->
             val audioResource = FileSystemResource(audioPath.toFile())
+            val prompt = AudioTranscriptionPrompt(audioResource, opts)
             val response = try {
-                transcriptionModel.call(AudioTranscriptionPrompt(audioResource))
+                transcriptionModel.call(prompt)
             } catch (e: Exception) {
                 log.warn("音频文件[$index] 转录失败: ${e.message}")
                 return@forEachIndexed
@@ -281,10 +295,14 @@ class STTModelTest {
         Files.write(filePath, audioData)
         log.debug("创建大音频文件: ${filePath.toAbsolutePath()}, 大小: ${audioData.size} bytes (${durationSeconds}秒)")
 
-        // Act
+        val sttModel = defaultSttModel
+        val opts = buildAudioTranscriptionOptions(sttModel)
         val audioResource = FileSystemResource(filePath.toFile())
+        val prompt = AudioTranscriptionPrompt(audioResource, opts)
+
+        // Act
         val response = try {
-            transcriptionModel.call(AudioTranscriptionPrompt(audioResource))
+            transcriptionModel.call(prompt)
         } catch (e: Exception) {
             log.warn("大音频文件转录失败: ${e.message}")
             return
@@ -311,19 +329,24 @@ class STTModelTest {
     @Test
     fun test_transcribe_consistency() {
         // Arrange
+        val sttModel = defaultSttModel
         val testAudioPath = createTestAudioFile("test_consistency")
+        val opts = buildAudioTranscriptionOptions(sttModel)
 
         // Act - 转录两次相同的音频
-        val audioResource = FileSystemResource(testAudioPath.toFile())
+        val audioResource1 = FileSystemResource(testAudioPath.toFile())
+        val prompt1 = AudioTranscriptionPrompt(audioResource1, opts)
         val response1 = try {
-            transcriptionModel.call(AudioTranscriptionPrompt(audioResource))
+            transcriptionModel.call(prompt1)
         } catch (e: Exception) {
             log.warn("第一次转录失败: ${e.message}")
             return
         }
-        
+
+        val audioResource2 = FileSystemResource(testAudioPath.toFile())
+        val prompt2 = AudioTranscriptionPrompt(audioResource2, opts)
         val response2 = try {
-            transcriptionModel.call(AudioTranscriptionPrompt(FileSystemResource(testAudioPath.toFile())))
+            transcriptionModel.call(prompt2)
         } catch (e: Exception) {
             log.warn("第二次转录失败: ${e.message}")
             return
@@ -373,9 +396,13 @@ class STTModelTest {
         log.info("音频文件路径: ${audioResource.path}")
         log.info("预期文本: $expectedText")
 
+        val sttModel = defaultSttModel
+        val opts = buildAudioTranscriptionOptions(sttModel)
+        val prompt = AudioTranscriptionPrompt(audioResource, opts)
+
         // Act
         val response: AudioTranscriptionResponse = try {
-            transcriptionModel.call(AudioTranscriptionPrompt(audioResource))
+            transcriptionModel.call(prompt)
         } catch (e: Exception) {
             log.error("真实音频文件转录失败: ${e.message}", e)
             throw e
@@ -420,19 +447,50 @@ class STTModelTest {
         }
     }
 
-    companion object {
+    /**
+     * 构建音频转录选项
+     *
+     * @param sttModelEnum STT 模型枚举，默认STTModelEnum.FASTER_WHISPER_SMALL
+     * @param language 语言代码（可选，如 "en", "zh", "ja" 等），如果为 null 则自动检测
+     * @param prompt 提示文本（可选），用于指导转录，帮助模型识别特定词汇或上下文
+     * @param temperature 温度参数（可选），控制输出的随机性，范围 0.0-1.0，默认 0.0
+     * @param responseFormat 响应格式（可选），默认为 "text"
+     * @return AudioTranscriptionOptions
+     */
+    private fun buildAudioTranscriptionOptions(
+        sttModelEnum: STTModelEnum,
+        language: String? = null,
+        prompt: String? = null,
+        temperature: Float = 0F,
+        responseFormat: OpenAiAudioApi.TranscriptResponseFormat = OpenAiAudioApi.TranscriptResponseFormat.TEXT
+    ): AudioTranscriptionOptions {
+        return OpenAiAudioTranscriptionOptions.builder()
+            .model(sttModelEnum.modelName)
+            .apply {
+                language?.let { language(it) }
+                prompt?.let { prompt(it) }
+                responseFormat(responseFormat)
+                temperature(temperature)
+            }
+            .build()
+    }
 
-        private val sttModel = STTModelEnum.FASTER_WHISPER_SMALL
+    companion object {
+        /** 默认使用的 STT 模型 */
+        private val defaultSttModel = STTModelEnum.FASTER_WHISPER_SMALL
 
         @JvmStatic
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
             // 启动 Speeches 容器并下载 STT 模型
-            SpeachesTestContainer.startIfNeeded(registry, listOf(sttModel.modelName))
+            SpeachesTestContainer.startIfNeeded(registry, listOf(
+                STTModelEnum.FASTER_WHISPER_TINY.modelName,
+                defaultSttModel.modelName,
+            ))
 
             // 配置 OpenAI STT 自动装配（speaches 兼容 OpenAI API）
+            registry.add("spring.ai.openai.base-url") { "http://127.0.0.1:${SpeachesTestContainer.PORT}" }
             registry.add("spring.ai.openai.api-key") { "dummy" } // speaches 默认不校验，可用占位
-            registry.add("spring.ai.openai.audio.transcription.options.model") { sttModel.modelName }
         }
     }
 
