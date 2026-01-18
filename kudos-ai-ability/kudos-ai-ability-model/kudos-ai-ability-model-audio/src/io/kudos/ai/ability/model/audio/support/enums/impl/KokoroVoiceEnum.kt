@@ -8,7 +8,7 @@ import io.kudos.ai.ability.model.audio.support.enums.ienums.VoiceType
  * Kokoro TTS 模型的 Voice 枚举
  * 
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 enum class KokoroVoiceEnum(

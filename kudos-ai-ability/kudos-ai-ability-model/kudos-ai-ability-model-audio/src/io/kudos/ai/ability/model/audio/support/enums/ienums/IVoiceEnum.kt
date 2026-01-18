@@ -4,7 +4,7 @@ package io.kudos.ai.ability.model.audio.support.enums.ienums
  * Voice（语音/发音人）接口
  * 
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 interface IVoiceEnum {

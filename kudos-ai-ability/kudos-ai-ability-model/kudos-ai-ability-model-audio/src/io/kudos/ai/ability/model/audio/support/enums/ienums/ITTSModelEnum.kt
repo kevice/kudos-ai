@@ -8,7 +8,7 @@ import io.kudos.ai.ability.model.common.support.enums.ienum.IAIModel
  *
  * @param VoiceEnumType 该模型关联的 Voice 枚举类型
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 interface ITTSModelEnum : IAIModel {

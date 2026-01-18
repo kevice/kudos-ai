@@ -11,7 +11,7 @@ import io.kudos.ai.ability.model.audio.support.enums.ienums.VoiceType
  * 例如：piper-zh_CN-huayan-medium 只支持中文 voices
  * 
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 enum class PiperVoiceEnum(

@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  * TTS (Text-to-Speech) 文本转语音模型枚举
  *
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 enum class TTSModelEnum(
