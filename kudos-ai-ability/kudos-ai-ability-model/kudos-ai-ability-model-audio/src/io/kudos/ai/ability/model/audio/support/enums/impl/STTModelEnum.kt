@@ -6,7 +6,7 @@ import io.kudos.ai.ability.model.audio.support.enums.ienums.ISTTModelEnum
  * STT (Speech-to-Text) 语音转文本模型枚举
  *
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 enum class STTModelEnum(

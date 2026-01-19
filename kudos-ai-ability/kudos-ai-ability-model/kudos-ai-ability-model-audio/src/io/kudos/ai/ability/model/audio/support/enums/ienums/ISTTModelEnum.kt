@@ -7,7 +7,7 @@ import io.kudos.ai.ability.model.common.support.enums.ienum.IAIModel
  * STT (Speech-to-Text) 语音转文本模型枚举接口
  *
  * @author K
- * @author AI:cursor
+ * @author AI: Cursor
  * @since 1.0.0
  */
 interface ISTTModelEnum : IAIModel {
